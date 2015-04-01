@@ -14,9 +14,22 @@
         android:layout_height="wrap_content"
         android:layout_margin="30dp"
         android:background="@android:color/holo_orange_dark"
-        android:text="PANIC!"
-        android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+        android:text="@string/panic"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
         android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/panicMessageEditText"
+        android:layout_below="@+id/panicButton" >
+
+        <Button
+            android:id="@+id/chooseContactButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/choose_contact" />
+    </LinearLayout>
 
     <EditText
         android:id="@+id/panicMessageEditText"
