@@ -19,9 +19,9 @@
         android:textStyle="bold" />
 
     <LinearLayout
+        android:id="@+id/contactLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/panicMessageEditText"
         android:layout_below="@+id/panicButton" >
 
         <Button
@@ -29,6 +29,12 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="@string/choose_contact" />
+
+        <TextView
+            android:id="@+id/contactTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent" >
+        </TextView>
     </LinearLayout>
 
     <EditText
@@ -36,10 +42,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_below="@+id/panicButton"
+        android:layout_below="@+id/contactLayout"
         android:layout_marginTop="12dp"
         android:ems="10"
-        android:inputType="textMultiLine" >
+        android:inputType="textMultiLine"
+        android:text="@string/panic_message_hint"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium" >
 
         <requestFocus />
     </EditText>
