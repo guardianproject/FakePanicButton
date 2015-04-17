@@ -37,12 +37,19 @@
         </TextView>
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/panicMessageLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/contactLayout"
+        android:text="Panic Message"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
     <EditText
         android:id="@+id/panicMessageEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_below="@+id/contactLayout"
+        android:layout_below="@+id/panicMessageLabel"
         android:layout_marginTop="12dp"
         android:ems="10"
         android:inputType="textMultiLine"
@@ -51,5 +58,21 @@
 
         <requestFocus />
     </EditText>
+
+    <TextView
+        android:id="@+id/receivingAppsLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/panicMessageEditText"
+        android:text="Receiving apps"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/receivingAppsLabel" >
+    </ListView>
 
 </RelativeLayout>
