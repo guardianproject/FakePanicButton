@@ -155,10 +155,12 @@ public class MainActivity extends ListActivity {
                 requestPackageName = packageNameList.get(position);
                 boolean checked = ((CheckedTextView) view).isChecked();
                 if (connectPackageNameList.contains(requestPackageName)) {
-                    if (checked)
+                    if (checked) {
                         requestAction = Panic.ACTION_CONNECT;
-                    else
+                    } else {
                         requestAction = Panic.ACTION_DISCONNECT;
+                        removeReceiver(requestPackageName);
+                    }
                     Intent intent = new Intent(requestAction);
                     intent.setPackage(requestPackageName);
                     // TODO add TrustedIntents here
@@ -203,10 +205,13 @@ public class MainActivity extends ListActivity {
                 }
                 break;
             case CONNECT_RESULT:
+                /*
+                 * Only ACTION_CONNECT needs the confirmation from
+                 * onActivityResult(), listView.setOnItemClickListener handles
+                 * all the other adding and removing of panic receivers.
+                 */
                 if (TextUtils.equals(requestAction, Panic.ACTION_CONNECT)) {
                     addReceiver(requestPackageName);
-                } else if (TextUtils.equals(requestAction, Panic.ACTION_DISCONNECT)) {
-                    removeReceiver(requestPackageName);
                 }
                 break;
         }
