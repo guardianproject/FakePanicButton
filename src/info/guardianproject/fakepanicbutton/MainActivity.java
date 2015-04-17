@@ -112,6 +112,17 @@ public class MainActivity extends ListActivity {
             packageNameList.add(resolveInfo.activityInfo.packageName);
             iconList.add(resolveInfo.activityInfo.loadIcon(pm));
         }
+
+        List<ResolveInfo> connectInfos = pm.queryIntentActivities(
+                new Intent(Panic.ACTION_CONNECT),
+                PackageManager.GET_ACTIVITIES);
+        final List<String> connectPackageNameList = new ArrayList<String>(connectInfos.size());
+        for (ResolveInfo resolveInfo : connectInfos) {
+            if (resolveInfo.activityInfo == null)
+                continue;
+            connectPackageNameList.add(resolveInfo.activityInfo.packageName);
+        }
+
         setListAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_multiple_choice,
                 appLabelList) {
@@ -137,15 +148,22 @@ public class MainActivity extends ListActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String packageName = packageNameList.get(position);
-                CheckedTextView checkedTextView = (CheckedTextView) view;
-                Intent intent;
-                if (checkedTextView.isChecked())
-                    intent = new Intent(Panic.ACTION_CONNECT);
-                else
-                    intent = new Intent(Panic.ACTION_DISCONNECT);
-                // TODO use TrustedIntents here
-                intent.setPackage(packageName);
-                startActivityForResult(intent, CONNECT_RESULT);
+                boolean checked = ((CheckedTextView) view).isChecked();
+                if (connectPackageNameList.contains(packageName)) {
+                    Intent intent;
+                    if (checked)
+                        intent = new Intent(Panic.ACTION_CONNECT);
+                    else
+                        intent = new Intent(Panic.ACTION_DISCONNECT);
+                    intent.setPackage(packageName);
+                    startActivityForResult(intent, CONNECT_RESULT);
+                } else {
+                    // no config is possible with this packageName
+                    if (checked)
+                        addReceiver(packageName);
+                    else
+                        removeReceiver(packageName);
+                }
             }
         });
     }
@@ -181,17 +199,32 @@ public class MainActivity extends ListActivity {
             case CONNECT_RESULT:
                 String action = data.getAction();
                 String packageName = data.getPackage();
-                HashSet<String> set = new HashSet<String>(prefs.getStringSet(
-                        PREF_RECEIVER_PACKAGE_NAMES,
-                        Collections.<String> emptySet()));
                 if (TextUtils.equals(action, Panic.ACTION_CONNECT)) {
-                    set.add(packageName);
+                    addReceiver(packageName);
                 } else if (TextUtils.equals(action, Panic.ACTION_DISCONNECT)) {
-                    set.remove(packageName);
+                    removeReceiver(packageName);
                 }
-                prefs.edit().putStringSet(PREF_RECEIVER_PACKAGE_NAMES, set).apply();
-                receiverPackageNames = set;
                 break;
         }
+    }
+
+    private boolean addReceiver(String packageName) {
+        HashSet<String> set = new HashSet<String>(prefs.getStringSet(
+                PREF_RECEIVER_PACKAGE_NAMES,
+                Collections.<String> emptySet()));
+        boolean result = set.add(packageName);
+        prefs.edit().putStringSet(PREF_RECEIVER_PACKAGE_NAMES, set).apply();
+        receiverPackageNames = set;
+        return result;
+    }
+
+    private boolean removeReceiver(String packageName) {
+        HashSet<String> set = new HashSet<String>(prefs.getStringSet(
+                PREF_RECEIVER_PACKAGE_NAMES,
+                Collections.<String> emptySet()));
+        boolean result = set.remove(packageName);
+        prefs.edit().putStringSet(PREF_RECEIVER_PACKAGE_NAMES, set).apply();
+        receiverPackageNames = set;
+        return result;
     }
 }
