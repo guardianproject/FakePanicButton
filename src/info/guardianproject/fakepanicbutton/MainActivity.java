@@ -4,14 +4,17 @@ package info.guardianproject.fakepanicbutton;
 import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Contacts;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -28,15 +31,24 @@ import android.widget.TextView;
 import info.guardianproject.panic.Panic;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends ListActivity {
     private static final String TAG = "MainActivity";
 
-    private static final int CONTACT_PICKER_RESULT = 92347;
+    private static final int CONTACT_PICKER_RESULT = 0x00;
+    private static final int CONNECT_RESULT = 0x01;
+
+    private static final String PREF_RECEIVER_PACKAGE_NAMES = "receiverPackageNames";
 
     private EditText panicMessageEditText;
     private TextView contactTextView;
+
+    private SharedPreferences prefs;
+    private Set<String> receiverPackageNames;
 
     private String displayName;
     private String phoneNumber;
@@ -45,6 +57,9 @@ public class MainActivity extends ListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         setContentView(R.layout.activity_main);
         panicMessageEditText = (EditText) findViewById(R.id.panicMessageEditText);
         contactTextView = (TextView) findViewById(R.id.contactTextView);
@@ -113,6 +128,11 @@ public class MainActivity extends ListActivity {
 
         ListView listView = getListView();
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        receiverPackageNames = prefs.getStringSet(PREF_RECEIVER_PACKAGE_NAMES,
+                Collections.<String> emptySet());
+        for (int i = 0; i < packageNameList.size(); i++)
+            if (receiverPackageNames.contains(packageNameList.get(i)))
+                listView.setItemChecked(i, true);
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -125,7 +145,7 @@ public class MainActivity extends ListActivity {
                     intent = new Intent(Panic.ACTION_DISCONNECT);
                 // TODO use TrustedIntents here
                 intent.setPackage(packageName);
-                startActivityForResult(intent, 0);
+                startActivityForResult(intent, CONNECT_RESULT);
             }
         });
     }
@@ -133,27 +153,45 @@ public class MainActivity extends ListActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != Activity.RESULT_OK)
+        if (resultCode != Activity.RESULT_OK || data == null)
             return;
-        Uri uri = data.getData();
-        String id = uri.getLastPathSegment();
-        Log.i(TAG, uri + "");
+        switch (requestCode) {
+            case CONTACT_PICKER_RESULT:
+                Uri uri = data.getData();
+                String id = uri.getLastPathSegment();
+                Log.i(TAG, uri + "");
 
-        String[] projection = {
-                Phone.DISPLAY_NAME,
-                Phone.NUMBER
-        };
-        Cursor cursor = getContentResolver().query(Phone.CONTENT_URI,
-                projection,
-                Phone.CONTACT_ID + " = ? ",
-                new String[] {
-                    id,
-                }, null);
+                String[] projection = {
+                        Phone.DISPLAY_NAME,
+                        Phone.NUMBER
+                };
+                Cursor cursor = getContentResolver().query(Phone.CONTENT_URI,
+                        projection,
+                        Phone.CONTACT_ID + " = ? ",
+                        new String[] {
+                            id,
+                        }, null);
 
-        if (cursor.moveToFirst()) {
-            displayName = cursor.getString(cursor.getColumnIndex(Phone.DISPLAY_NAME));
-            phoneNumber = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
-            contactTextView.setText(displayName + "/" + phoneNumber);
+                if (cursor.moveToFirst()) {
+                    displayName = cursor.getString(cursor.getColumnIndex(Phone.DISPLAY_NAME));
+                    phoneNumber = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
+                    contactTextView.setText(displayName + "/" + phoneNumber);
+                }
+                break;
+            case CONNECT_RESULT:
+                String action = data.getAction();
+                String packageName = data.getPackage();
+                HashSet<String> set = new HashSet<String>(prefs.getStringSet(
+                        PREF_RECEIVER_PACKAGE_NAMES,
+                        Collections.<String> emptySet()));
+                if (TextUtils.equals(action, Panic.ACTION_CONNECT)) {
+                    set.add(packageName);
+                } else if (TextUtils.equals(action, Panic.ACTION_DISCONNECT)) {
+                    set.remove(packageName);
+                }
+                prefs.edit().putStringSet(PREF_RECEIVER_PACKAGE_NAMES, set).apply();
+                receiverPackageNames = set;
+                break;
         }
     }
 }
