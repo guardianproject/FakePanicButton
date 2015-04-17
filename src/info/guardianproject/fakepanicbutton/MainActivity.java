@@ -71,14 +71,17 @@ public class MainActivity extends ListActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(Panic.ACTION_TRIGGER);
                 intent.putExtra(Intent.EXTRA_EMAIL, new String[] {
-                    emailAddress
+                        emailAddress
                 });
                 intent.putExtra(Intent.EXTRA_PHONE_NUMBER, phoneNumber);
                 intent.putExtra(Intent.EXTRA_SUBJECT, "panic message");
                 intent.putExtra(Intent.EXTRA_TEXT,
                         panicMessageEditText.getText().toString());
-                // TODO use TrustedIntents here and cycle through configured list of packageNames
-                startActivityForResult(intent, 0);
+                // TODO use TrustedIntents here
+                for (String packageName : receiverPackageNames) {
+                    intent.setPackage(packageName);
+                    startActivityForResult(intent, 0);
+                }
             }
         });
 
