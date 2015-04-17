@@ -49,6 +49,8 @@ public class MainActivity extends ListActivity {
 
     private SharedPreferences prefs;
     private Set<String> receiverPackageNames;
+    private String requestPackageName;
+    private String requestAction;
 
     private String displayName;
     private String phoneNumber;
@@ -150,22 +152,23 @@ public class MainActivity extends ListActivity {
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String packageName = packageNameList.get(position);
+                requestPackageName = packageNameList.get(position);
                 boolean checked = ((CheckedTextView) view).isChecked();
-                if (connectPackageNameList.contains(packageName)) {
-                    Intent intent;
+                if (connectPackageNameList.contains(requestPackageName)) {
                     if (checked)
-                        intent = new Intent(Panic.ACTION_CONNECT);
+                        requestAction = Panic.ACTION_CONNECT;
                     else
-                        intent = new Intent(Panic.ACTION_DISCONNECT);
-                    intent.setPackage(packageName);
+                        requestAction = Panic.ACTION_DISCONNECT;
+                    Intent intent = new Intent(requestAction);
+                    intent.setPackage(requestPackageName);
+                    // TODO add TrustedIntents here
                     startActivityForResult(intent, CONNECT_RESULT);
                 } else {
                     // no config is possible with this packageName
                     if (checked)
-                        addReceiver(packageName);
+                        addReceiver(requestPackageName);
                     else
-                        removeReceiver(packageName);
+                        removeReceiver(requestPackageName);
                 }
             }
         });
@@ -200,12 +203,10 @@ public class MainActivity extends ListActivity {
                 }
                 break;
             case CONNECT_RESULT:
-                String action = data.getAction();
-                String packageName = data.getPackage();
-                if (TextUtils.equals(action, Panic.ACTION_CONNECT)) {
-                    addReceiver(packageName);
-                } else if (TextUtils.equals(action, Panic.ACTION_DISCONNECT)) {
-                    removeReceiver(packageName);
+                if (TextUtils.equals(requestAction, Panic.ACTION_CONNECT)) {
+                    addReceiver(requestPackageName);
+                } else if (TextUtils.equals(requestAction, Panic.ACTION_DISCONNECT)) {
+                    removeReceiver(requestPackageName);
                 }
                 break;
         }
