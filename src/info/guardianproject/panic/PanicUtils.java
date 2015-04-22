@@ -23,4 +23,11 @@ public class PanicUtils {
         }
         return packageName;
     }
+
+    static boolean checkForIntentWithAction(Activity activity, String action) {
+        if (TextUtils.equals(activity.getIntent().getAction(), action))
+            return true;
+        else
+            return false;
+    }
 }

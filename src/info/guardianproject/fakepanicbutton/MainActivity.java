@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends ListActivity {
-    private static final String TAG = "MainActivity";
+    public static final String TAG = "FakePanicButton";
 
     private static final int CONTACT_PICKER_RESULT = 0x00;
     private static final int CONNECT_RESULT = 0x01;
@@ -54,6 +54,11 @@ public class MainActivity extends ListActivity {
         super.onCreate(savedInstanceState);
 
         if (PanicTrigger.checkForDisconnectIntent(this)) {
+            finish();
+            return;
+        }
+
+        if (PanicTrigger.checkForConnectIntent(this)) {
             finish();
             return;
         }
@@ -131,6 +136,7 @@ public class MainActivity extends ListActivity {
                 if (connectPackageNameList.contains(requestPackageName)) {
                     if (checked) {
                         requestAction = Panic.ACTION_CONNECT;
+                        // addReceiver() happens in onActivityResult()
                     } else {
                         requestAction = Panic.ACTION_DISCONNECT;
                         PanicTrigger.removeReceiver(getApplicationContext(), requestPackageName);

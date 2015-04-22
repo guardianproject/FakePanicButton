@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,6 +17,21 @@ public class PanicTrigger {
 
     /**
      * Checks whether the provided {@link Activity} was started with the action
+     * {@link Panic.ACTION_CONNECT}, and if so, processes that {@link Intent} ,
+     * adding the sending app as the panic trigger.
+     *
+     * @param activity the {@code Activity} to check for the {@code Intent}
+     * @return whether an {@code ACTION_DISCONNECT Intent} was received
+     */
+    public static boolean checkForConnectIntent(Activity activity) {
+        boolean result = PanicUtils.checkForIntentWithAction(activity, Panic.ACTION_CONNECT);
+        String packageName = PanicUtils.getCallingPackageName(activity);
+        addReceiver(activity, packageName);
+        return result;
+    }
+
+    /**
+     * Checks whether the provided {@link Activity} was started with the action
      * {@link Panic.ACTION_DISCONNECT}, and if so, processes that {@link Intent}
      * , removing the sending app as the panic trigger if it is currently
      * configured to be so.
@@ -26,13 +40,9 @@ public class PanicTrigger {
      * @return whether an {@code ACTION_DISCONNECT Intent} was received
      */
     public static boolean checkForDisconnectIntent(Activity activity) {
-        boolean result = false;
-        Intent intent = activity.getIntent();
-        if (TextUtils.equals(intent.getAction(), Panic.ACTION_DISCONNECT)) {
-            result = true;
-            String packageName = PanicUtils.getCallingPackageName(activity);
-            removeReceiver(activity, packageName);
-        }
+        boolean result = PanicUtils.checkForIntentWithAction(activity, Panic.ACTION_DISCONNECT);
+        String packageName = PanicUtils.getCallingPackageName(activity);
+        removeReceiver(activity, packageName);
         return result;
     }
 
