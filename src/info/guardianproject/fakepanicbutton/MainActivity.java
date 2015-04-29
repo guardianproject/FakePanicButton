@@ -30,6 +30,7 @@ import info.guardianproject.panic.Panic;
 import info.guardianproject.panic.PanicTrigger;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -82,25 +83,33 @@ public class MainActivity extends ListActivity {
     protected void onResume() {
         super.onResume();
         final PackageManager pm = getPackageManager();
-        List<ResolveInfo> resolveInfos = pm.queryIntentActivities(
-                new Intent(Panic.ACTION_TRIGGER),
-                PackageManager.GET_ACTIVITIES);
-        if (resolveInfos.isEmpty())
+        List<ResolveInfo> activities = pm.queryIntentActivities(
+                new Intent(Panic.ACTION_TRIGGER), 0);
+        List<ResolveInfo> services = pm.queryIntentServices(
+                new Intent(Panic.ACTION_TRIGGER), 0);
+        if (activities.isEmpty() && services.isEmpty())
             return;
-        final List<String> appLabelList = new ArrayList<String>(resolveInfos.size());
-        final List<String> packageNameList = new ArrayList<String>(resolveInfos.size());
-        final List<Drawable> iconList = new ArrayList<Drawable>(resolveInfos.size());
-        for (ResolveInfo resolveInfo : resolveInfos) {
+        int size = activities.size() + services.size();
+        final ArrayList<String> appLabelList = new ArrayList<String>(size);
+        final ArrayList<String> packageNameList = new ArrayList<String>(size);
+        final ArrayList<Drawable> iconList = new ArrayList<Drawable>(size);
+        for (ResolveInfo resolveInfo : activities) {
             if (resolveInfo.activityInfo == null)
                 continue;
             appLabelList.add(resolveInfo.activityInfo.loadLabel(pm).toString());
             packageNameList.add(resolveInfo.activityInfo.packageName);
             iconList.add(resolveInfo.activityInfo.loadIcon(pm));
         }
+        for (ResolveInfo resolveInfo : services) {
+            if (resolveInfo.serviceInfo == null)
+                continue;
+            appLabelList.add(resolveInfo.serviceInfo.loadLabel(pm).toString());
+            packageNameList.add(resolveInfo.serviceInfo.packageName);
+            iconList.add(resolveInfo.serviceInfo.loadIcon(pm));
+        }
 
         List<ResolveInfo> connectInfos = pm.queryIntentActivities(
-                new Intent(Panic.ACTION_CONNECT),
-                PackageManager.GET_ACTIVITIES);
+                new Intent(Panic.ACTION_CONNECT), 0);
         final List<String> connectPackageNameList = new ArrayList<String>(connectInfos.size());
         for (ResolveInfo resolveInfo : connectInfos) {
             if (resolveInfo.activityInfo == null)
@@ -169,9 +178,21 @@ public class MainActivity extends ListActivity {
                 intent.putExtra(Intent.EXTRA_TEXT,
                         panicMessageEditText.getText().toString());
                 // TODO use TrustedIntents here
+                List<ResolveInfo> activitiesList = pm.queryIntentActivities(intent, 0);
+                Set<String> activities = new HashSet<String>();
+                for (ResolveInfo resInfo : activitiesList)
+                    activities.add(resInfo.activityInfo.packageName);
+                List<ResolveInfo> servicesList = pm.queryIntentServices(intent, 0);
+                Set<String> services = new HashSet<String>();
+                for (ResolveInfo resInfo : servicesList)
+                    services.add(resInfo.serviceInfo.packageName);
                 for (String packageName : receiverPackageNames) {
                     intent.setPackage(packageName);
-                    startActivityForResult(intent, 0);
+                    if (activities.contains(packageName)) {
+                        startActivityForResult(intent, 0);
+                    } else if (services.contains(packageName)) {
+                        startService(intent);
+                    }
                 }
             }
         });
