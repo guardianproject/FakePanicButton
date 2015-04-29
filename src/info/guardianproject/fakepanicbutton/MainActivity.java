@@ -180,10 +180,12 @@ public class MainActivity extends ListActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != Activity.RESULT_OK || data == null)
+        if (resultCode != Activity.RESULT_OK)
             return;
         switch (requestCode) {
             case CONTACT_PICKER_RESULT:
+                if (data == null)
+                    return;
                 Uri uri = data.getData();
                 String id = uri.getLastPathSegment();
                 Log.i(TAG, uri + "");
