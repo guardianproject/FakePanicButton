@@ -14,3 +14,15 @@ BUILD.MF
 
 # build products from tests
 *.class
+
+# Windows thumbnail db
+Thumbs.db
+
+# OSX files
+.DS_Store
+
+# Android Studio
+*.iml
+.idea/
+.gradle/
+build/
