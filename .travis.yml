@@ -1,0 +1,27 @@
+sudo: false
+
+language: android
+
+jdk:
+  # the release build infrastructure uses OpenJDK from Debian
+  - openjdk7
+  # many developers use the Oracle JDK
+  # (disabled because Travis cannot reliably start the emulator with these)
+  - oraclejdk8
+  - oraclejdk7
+
+android:
+  components:
+    - build-tools-23.0.2
+    - android-23
+  licenses:
+    # only approve the free software licenses
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+
+script:
+  - ./jenkins-build
+  - ant clean debug
+
+after_failure:
+  - find * -name lint-results.xml | xargs cat
